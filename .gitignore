@@ -30,7 +30,4 @@ Thumbs.db
 # Jupyter Notebooks (optional)
 .ipynb_checkpoints/
 
-# Model files
-*.pkl
-*.joblib
-fraud_model/
+

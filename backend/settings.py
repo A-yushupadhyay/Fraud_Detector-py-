@@ -30,6 +30,7 @@ DEBUG = False
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'fraud-detector-py.onrender.com'
     '.onrender.com',  # allow any subdomain from Render
     os.getenv('RENDER_EXTERNAL_HOSTNAME', '')  # dynamic host at runtime
 ]

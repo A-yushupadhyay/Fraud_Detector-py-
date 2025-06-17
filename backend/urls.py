@@ -16,15 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.http import HttpResponse
+from django.shortcuts import redirect
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),   # this exists already
-    path('register/', include('users.urls')),  # add this if you want /register/
-    path('login/', include('users.urls')),     # optional alias
-    path('logout/', include('users.urls')),    # optional alias
     path('fraud/', include('fraudml.urls')),
+    path('', lambda request: redirect('users/register/')),  # 👈 redirect root to /users/register/                             # optional: root sanity check
 
 ]

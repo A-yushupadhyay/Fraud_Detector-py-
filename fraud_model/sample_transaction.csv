@@ -1,0 +1,11 @@
+order_id,customer_id,amount,payment_method,timestamp,device,location
+TXN001,CUST001,4900,cash,2025-06-15 09:30:00,desktop,delhi
+TXN002,CUST002,3200,upi,2025-06-15 10:00:00,mobile,mumbai
+TXN003,CUST003,60,cash,2025-06-15 11:15:00,desktop,kolkata
+TXN004,CUST004,45,card,2025-06-15 12:00:00,mobile,delhi
+TXN005,CUST005,5100,cash,2025-06-15 13:45:00,desktop,kolkata
+TXN006,CUST006,200,upi,2025-06-15 14:30:00,mobile,delhi
+TXN007,CUST007,4999,cash,2025-06-15 15:15:00,desktop,mumbai
+TXN008,CUST008,1200,card,2025-06-15 16:00:00,desktop,kolkata
+TXN009,CUST009,30,card,2025-06-15 17:45:00,mobile,delhi
+TXN010,CUST010,4000,cash,2025-06-15 18:30:00,desktop,mumbai
