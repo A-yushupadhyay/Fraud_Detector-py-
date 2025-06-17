@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>High Fraud Alert</title>
+  </head>
+  <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #0d1117; color: #f0f0f0;">
+    <div style="max-width: 600px; margin: 30px auto; background-color: #161b22; padding: 24px; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);">
+      
+      <!-- Header -->
+      <h2 style="color: #f87171; font-size: 24px; margin-bottom: 16px;">
+        🚨 High Fraud Detected
+      </h2>
+
+      <!-- Message Body -->
+      <p style="font-size: 16px; margin-bottom: 12px;">
+        A transaction by <strong>{{ txn.customer_name }}</strong> (Order ID: <strong>#{{ txn.order_id }}</strong>) has been flagged as <span style="color: #f87171;">high risk</span>.
+      </p>
+
+      <!-- Details -->
+      <ul style="list-style-type: none; padding-left: 0; font-size: 15px; margin: 16px 0; line-height: 1.6;">
+        <li><strong>💰 Amount:</strong> ₹{{ txn.amount }}</li>
+        <li><strong>📅 Date:</strong> {{ txn.date }}</li>
+        <li><strong>⚠️ Fraud Score:</strong> {{ txn.fraud_probability|floatformat:2 }}%</li>
+      </ul>
+
+      <!-- Action Prompt -->
+      <p style="font-size: 16px; color: #facc15;">
+        Please review this transaction immediately for potential fraudulent activity.
+      </p>
+
+      <!-- Footer -->
+      <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 12px; font-size: 13px; color: #999;">
+        This is an automated alert from your fraud detection system. Do not reply to this email.
+      </div>
+    </div>
+  </body>
+</html>

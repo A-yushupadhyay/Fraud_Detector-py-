@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}Fraud Dashboard{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen bg-gray-900 text-white font-sans">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-gray-800 p-6 space-y-4">
+    <h2 class="text-xl font-bold tracking-wide mb-6">🚨 Fraud Detection</h2>
+    <nav class="flex flex-col space-y-2">
+      <a href="{% url 'dashboard' %}" class="text-white hover:bg-gray-700 rounded px-3 py-2 {% if request.path == '/dashboard/' %}bg-gray-700{% endif %}">Dashboard</a>
+      <a href="{% url 'reports' %}" class="text-white hover:bg-gray-700 rounded px-3 py-2">Reports</a>
+      <a href="{% url 'settings' %}" class="text-white hover:bg-gray-700 rounded px-3 py-2">Settings</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 p-8 bg-gray-950 overflow-y-auto">
+        {% if messages %}
+      <div class="space-y-4 mb-6">
+        {% for message in messages %}
+          <div class="bg-green-700 text-white p-4 rounded shadow-md animate-bounce-in">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+
+    <!-- Metrics row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div class="bg-gray-800 p-6 rounded-xl shadow-md hover:scale-105 transition">
+        <h3 class="text-sm uppercase text-gray-400">High Fraud</h3>
+        <p class="text-3xl font-bold text-red-400">{{ high_fraud_count }}</p>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-xl shadow-md hover:scale-105 transition">
+        <h3 class="text-sm uppercase text-gray-400">Total Orders</h3>
+        <p class="text-3xl font-bold text-teal-400">{{ total_orders }}</p>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-xl shadow-md hover:scale-105 transition">
+        <h3 class="text-sm uppercase text-gray-400">Last Upload</h3>
+        <p class="text-xl font-medium text-white">{{ last_upload_time }}</p>
+      </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="bg-blue-800/80 p-6 rounded-2xl shadow-lg backdrop-blur-md hover:scale-105 transition col-span-1 md:col-span-2 mb-10">
+      <h3 class="text-sm text-blue-200 uppercase mb-4">📊 Fraud Activity Trend</h3>
+      <div class="w-full h-64">
+        <canvas id="fraudBarChart"></canvas>
+      </div>
+    </div>
+      <div class="bg-gray-900 p-4 rounded-lg shadow mt-6">
+      <h2 class="text-lg font-bold text-white mb-3">🔍 Suspicious Users</h2>
+      <table class="w-full text-sm text-left text-white">
+        <thead>
+          <tr class="bg-gray-800 text-gray-300">
+            <th class="px-4 py-2">Customer ID</th>
+            <th class="px-4 py-2">Fraud Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in suspicious_users %}
+          <tr class="border-t border-gray-700 hover:bg-gray-800">
+            <td class="px-4 py-2 font-mono">{{ user.customer_id }}</td>
+            <td class="px-4 py-2 text-yellow-400 font-semibold">{{ user.count }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" class="px-4 py-2 text-gray-400">No suspicious users found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+
+    <!-- Transaction Classification -->
+    <div class="bg-gray-800 rounded-xl p-6">
+      <h3 class="text-lg font-semibold mb-4 text-white">Transaction Classification</h3>
+
+      <form method="GET" action="" class="flex mb-4">
+        <input name="search" type="text" class="flex-1 bg-gray-700 border border-gray-600 rounded-l px-4 py-2 text-white placeholder-gray-400 focus:outline-none" placeholder="Search by customer or location">
+        <button class="bg-blue-600 px-4 py-2 rounded-r text-white hover:bg-blue-700 transition">Search</button>
+      </form>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-gray-300">
+          <thead>
+            <tr class="border-b border-gray-700">
+              <th class="py-2">Order ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Probability</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for txn in transactions %}
+            <tr class="hover:bg-gray-700/50">
+              <td class="py-2">{{ txn.order_id }}</td>
+              <td>{{ txn.customer_id }}</td>
+              <td>₹{{ txn.amount }}</td>
+              <td>{{ txn.payment_method }}</td>
+              <td class="{% if txn.fraud_probability > 0.8 %}text-red-400{% else %}text-green-400{% endif %}">
+                {{ txn.fraud_probability|floatformat:2 }}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="py-4 text-center text-gray-500">No transactions found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ✅ Only once -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const fraudCustomers = JSON.parse('{{ fraud_customers|safe|escapejs }}');
+  const fraudScores = JSON.parse('{{ fraud_scores|safe|escapejs }}');
+
+  const barCanvas = document.getElementById('fraudBarChart');
+  if (barCanvas) {
+    const barCtx = barCanvas.getContext('2d');
+
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: fraudCustomers,
+        datasets: [{
+          label: 'Avg Fraud Probability',
+          data: fraudScores,
+          backgroundColor: fraudScores.map(score => 
+            score > 0.8 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(34, 197, 94, 0.7)'
+          ),
+          borderColor: fraudScores.map(score => 
+            score > 0.8 ? 'rgb(239, 68, 68)' : 'rgb(34, 197, 94)'
+          ),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#fff' } }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          y: {
+            beginAtZero: true,
+            max: 1,
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  }
+</script>
+
+
+
+{% endblock %}
+

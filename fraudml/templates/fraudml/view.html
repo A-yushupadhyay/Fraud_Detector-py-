@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Fraud Transactions{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 min-h-screen text-white py-10 px-6 md:px-12 rounded-lg">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div>
+      <h2 class="text-3xl font-bold">🚨 Smart Fraud Overview</h2>
+      <p class="text-gray-300 mt-1">Visual insights into detected fraudulent activities.</p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <input id="searchInput" type="text" placeholder="🔍 Search Order or Customer ID"
+        class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-400"
+        onkeyup="filterTable()">
+      <select id="riskFilter"
+        class="bg-gray-800 border border-gray-700 px-4 py-2 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+        onchange="filterTable()">
+        <option value="">All Risk Levels</option>
+        <option value="High Risk">High Risk</option>
+        <option value="Medium Risk">Medium Risk</option>
+        <option value="Low Risk">Low Risk</option>
+      </select>
+      <a href="{% url 'download_csv' %}"
+        class="bg-teal-500 hover:bg-teal-600 text-white font-semibold px-4 py-2 rounded-md shadow">
+        ⬇ Download CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-10">
+    <canvas id="fraudChart" class="w-full h-64"></canvas>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-x-auto">
+    <table id="fraudTable" class="min-w-full bg-gray-900 rounded-lg overflow-hidden shadow">
+      <thead class="bg-gray-700 text-gray-300 uppercase text-xs tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">#</th>
+          <th class="px-4 py-3 text-left">Order ID</th>
+          <th class="px-4 py-3 text-left">Customer</th>
+          <th class="px-4 py-3 text-left">Amount</th>
+          <th class="px-4 py-3 text-left">Payment</th>
+          <th class="px-4 py-3 text-left">Date</th>
+          <th class="px-4 py-3 text-left">Device</th>
+          <th class="px-4 py-3 text-left">Location</th>
+          <th class="px-4 py-3 text-left">Fraud %</th>
+          <th class="px-4 py-3 text-left">Risk</th>
+          <th class="px-4 py-3 text-left">Action</th>
+
+        </tr>
+      </thead>
+      <tbody class="text-gray-200 text-sm">
+        {% for tx in transactions %}
+        <tr
+          class="border-t border-gray-700 tx-row {% if tx.fraud_probability > 0.8 %}bg-red-900 bg-opacity-30{% elif tx.fraud_probability > 0.5 %}bg-yellow-800 bg-opacity-30{% else %}bg-gray-800{% endif %}">
+          <td class="px-4 py-2">{{ forloop.counter }}</td>
+          <td class="px-4 py-2 font-semibold">{{ tx.order_id }}</td>
+          <td class="px-4 py-2">{{ tx.customer_id }}</td>
+          <td class="px-4 py-2">₹{{ tx.amount }}</td>
+          <td class="px-4 py-2">{{ tx.payment_method }}</td>
+          <td class="px-4 py-2">{{ tx.timestamp|date:"d M Y, h:i A" }}</td>
+          <td class="px-4 py-2">{{ tx.device }}</td>
+          <td class="px-4 py-2">{{ tx.location }}</td>
+          <td class="px-4 py-2 font-bold text-yellow-300">{{ tx.fraud_probability|floatformat:2 }}</td>
+          <td class="px-4 py-2">
+            <a href="{% url 'transaction_detail' tx.id %}"
+              class="inline-block bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1 rounded-full shadow transition duration-200">
+              View Details
+            </a>
+          </td>
+
+        <td class="px-4 py-2">
+            {% if tx.id and tx.is_fraud == None %}
+              <div class="flex gap-2">
+                <a href="{% url 'mark_as_fraud' tx.id %}"
+                  class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
+                  🚨 Mark Fraud
+                </a>
+                <a href="{% url 'mark_as_not_fraud' tx.id %}"
+                  class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
+                  ✅ Mark Not Fraud
+                </a>
+              </div>
+            {% elif tx.is_fraud %}
+              <span class="inline-block bg-red-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
+                🚨 Marked as Fraud
+              </span>
+            {% else %}
+              <span class="inline-block bg-green-700 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
+                ✅ Marked Not Fraud
+              </span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Pass fraud data to JS safely -->
+<script id="fraud-data" type="application/json">
+  {{ fraud_chart|safe }}
+</script>
+
+
+<script>
+  const fraudLevels = JSON.parse(document.getElementById("fraud-data").textContent);
+
+  new Chart(document.getElementById("fraudChart"), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(fraudLevels),
+      datasets: [{
+        label: 'Fraud Risk Count',
+        data: Object.values(fraudLevels),
+        backgroundColor: ['#dc2626', '#facc15', '#10b981'],
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Fraud Risk Distribution',
+          color: '#fff',
+          font: { size: 18 }
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#ddd' }
+        },
+        y: {
+          ticks: { color: '#ddd' }
+        }
+      }
+    }
+  });
+
+  function filterTable() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const filter = document.getElementById("riskFilter").value;
+    const rows = document.querySelectorAll(".tx-row");
+
+    rows.forEach(row => {
+      const order = row.cells[1].innerText.toLowerCase();
+      const customer = row.cells[2].innerText.toLowerCase();
+      const risk = row.querySelector(".risk-label").innerText;
+
+      const matchesSearch = order.includes(search) || customer.includes(search);
+      const matchesRisk = !filter || risk.includes(filter);
+
+      row.style.display = (matchesSearch && matchesRisk) ? "" : "none";
+    });
+  }
+</script>
+{% endblock %}

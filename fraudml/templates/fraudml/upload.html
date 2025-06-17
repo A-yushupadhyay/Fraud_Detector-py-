@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Upload Transactions{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl space-y-8 mt-8">
+
+  <!-- Header -->
+  <div class="flex items-center space-x-3">
+    <div class="text-3xl">📤</div>
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Upload Transaction CSV</h1>
+  </div>
+
+  <!-- Drag & Drop Upload Zone -->
+  <form method="POST" enctype="multipart/form-data" id="uploadForm" class="space-y-6">
+    {% csrf_token %}
+
+    <div id="drop-area" class="w-full border-2 border-dashed border-teal-400 bg-gray-50 p-6 rounded-lg text-center cursor-pointer">
+      <p class="text-gray-700 text-sm">Drag & drop your CSV file here or click to select</p>
+      <input type="file" name="csv_file" id="csv_file" accept=".csv" required class="hidden" />
+    </div>
+
+    <p class="text-xs text-gray-500">Only .csv files are supported (e.g. orders.csv)</p>
+
+    <button type="submit"
+            class="w-full md:w-auto bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 ease-in-out shadow">
+      ⬆ Upload File
+    </button>
+  </form>
+
+  <!-- Example CSV Note -->
+  <div class="bg-gray-50 p-4 rounded-md border text-sm text-gray-600">
+    📄 Your CSV should include: <code>order_id, customer_id, amount, payment_method, timestamp, device, location</code>
+  </div>
+
+  <!-- Upload History -->
+  {% if upload_history %}
+  <div class="mt-6">
+    <h2 class="text-lg font-semibold text-gray-700 mb-2">🕒 Upload History</h2>
+    <ul class="space-y-2 text-sm text-gray-600">
+      {% for item in upload_history %}
+        <li>✅ <strong>{{ item.file_name }}</strong> uploaded on {{ item.timestamp|date:"d M Y, H:i" }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Last Uploaded Summary -->
+  {% if last_upload %}
+  <div class="mt-6 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+    <h3 class="text-teal-800 font-semibold">📊 Last Upload Summary</h3>
+    <p class="text-sm text-gray-700 mt-1">File: <strong>{{ last_upload.file_name }}</strong> | Rows Processed: {{ last_upload.rows }} | Time: {{ last_upload.timestamp|date:"d M Y, H:i" }}</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ✅ Success Toast with Close -->
+{% if messages %}
+  <div id="toast"
+       class="fixed top-6 right-6 z-50 bg-green-600 text-white font-medium px-6 py-3 rounded-lg shadow-lg flex justify-between items-center min-w-[300px] animate-fade-in-down">
+    <div>
+      {% for message in messages %}
+        {{ message }}
+      {% endfor %}
+    </div>
+    <button onclick="document.getElementById('toast').remove()" class="ml-4 font-bold text-xl leading-none">&times;</button>
+  </div>
+  <script>
+    setTimeout(() => {
+      const toast = document.getElementById('toast');
+      if (toast) toast.style.opacity = '0';
+    }, 3000);
+    setTimeout(() => {
+      window.location.href = "{% url 'view_transactions' %}";
+    }, 4000);
+  </script>
+  <style>
+    @keyframes fade-in-down {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-down {
+      animation: fade-in-down 0.4s ease-out forwards;
+    }
+  </style>
+{% endif %}
+
+<!-- Drag & Drop Script -->
+<script>
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('csv_file');
+
+  dropArea.addEventListener('click', () => fileInput.click());
+
+  dropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.classList.add('bg-teal-100');
+  });
+
+  dropArea.addEventListener('dragleave', () => {
+    dropArea.classList.remove('bg-teal-100');
+  });
+
+  dropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropArea.classList.remove('bg-teal-100');
+    fileInput.files = e.dataTransfer.files;
+  });
+</script>
+
+{% endblock %}

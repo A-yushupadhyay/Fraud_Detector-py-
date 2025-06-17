@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Smart Fraud Detection{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white font-sans">
+{% if "login" not in request.path and "register" not in request.path %}
+
+
+
+  <!-- 🌑 DARK NAVBAR -->
+  <nav class="bg-gray-800 shadow-md sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="text-xl font-semibold text-teal-400">
+      🚨 Smart Fraud Portal
+    </div>
+
+    <!-- LEFT: Navigation links -->
+    <div class="flex items-center space-x-6 text-gray-200">
+      <a href="{% url 'dashboard' %}" class="hover:text-teal-400">Dashboard</a>
+      <a href="{% url 'upload_csv' %}" class="hover:text-teal-400">Upload</a>
+      <a href="{% url 'view_transactions' %}" class="hover:text-teal-400">View</a>
+      <a href="{% url 'logout' %}" class="hover:text-red-400">Logout</a>
+    </div>
+
+    <!-- RIGHT: User info -->
+    <div class="flex items-center space-x-2 text-sm text-gray-300">
+      <span>👤 {{ request.user.username }}</span>
+      <span class="px-2 py-1 text-xs bg-yellow-600 text-white rounded-full">👑 Admin</span>
+    </div>
+  </div>
+</nav>
+
+{% endif %}
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto p-6">
+    {% block content %}{% endblock %}
+  </div>
+
+</body>
+</html>
+

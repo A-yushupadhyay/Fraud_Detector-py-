@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# Environment variables
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# Mac/Linux/Windows system files
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebooks (optional)
+.ipynb_checkpoints/
+
+# Model files
+*.pkl
+*.joblib
+fraud_model/

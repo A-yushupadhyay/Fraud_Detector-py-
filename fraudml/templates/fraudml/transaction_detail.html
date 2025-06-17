@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Transaction #{{ txn.order_id }}</h2>
+<p><strong>Customer ID:</strong> {{ txn.customer_id }}</p>
+<p><strong>Fraud Score:</strong> {{ txn.fraud_probability }}</p>
+<p><strong>Marked as Fraud:</strong> {{ txn.is_fraud }}</p>
+
+<form method="post" action="">
+    {% csrf_token %}
+    <button name="action" value="fraud" class="btn btn-danger">Mark as Fraud</button>
+    <button name="action" value="not_fraud" class="btn btn-success">Mark as Not Fraud</button>
+</form>
+<a href="{% url 'view_transactions' %}">← Back to transactions</a>
+{% endblock %}
